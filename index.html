@@ -7,7 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
+  <script>
+    var SUPABASE_URL      = 'https://szkhywybwebcenjfosbw.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6a2h5d3lid2ViY2VuamZvc2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODE5MzgsImV4cCI6MjA5NTM1NzkzOH0.5KZUcZED-HA61QT6w6S4QnITTaf9bzlp58Gt1XcOQ4M';
+  </script>
   <style>
     /* ===== 기본 리셋 & 공통 ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -411,10 +414,10 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== Supabase 초기화 =====
-let supabase;
+// ===== Supabase 초기화 (변수명 db — window.supabase와 충돌 방지) =====
+let db;
 try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } catch (e) {
   console.error('Supabase 초기화 실패:', e);
 }
@@ -511,7 +514,7 @@ async function submitOpinion() {
   };
 
   try {
-    const { error } = await supabase.from('debate_records').insert([payload]);
+    const { error } = await db.from('debate_records').insert([payload]);
     if (error) throw error;
 
     showToast('✅ 의견이 제출되었어요!', 'success');
@@ -528,8 +531,8 @@ async function submitOpinion() {
     console.error('제출 오류:', e);
     showToast('❌ 제출에 실패했어요. 다시 시도해 주세요.', 'error');
   } finally {
-    btn.disabled = false;
     btn.textContent = '의견 제출하기';
+    checkSubmitReady(); // 입력 상태 기준으로 버튼 활성화 여부 재판단
   }
 }
 
@@ -539,7 +542,7 @@ async function loadOpinions() {
     '<div class="empty-state"><span class="loading-spinner" style="border-color:rgba(0,0,0,0.15);border-top-color:#ff9800;"></span> 불러오는 중...</div>';
 
   try {
-    let query = supabase
+    let query = db
       .from('debate_records')
       .select('*')
       .order('created_at', { ascending: false });
